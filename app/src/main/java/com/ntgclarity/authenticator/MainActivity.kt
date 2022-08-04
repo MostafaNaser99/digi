@@ -7,18 +7,23 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
+import androidx.room.Room
+import com.ntgclarity.authenticator.database.User
+import com.ntgclarity.authenticator.database.UsersDatabase
 import com.ntgclarity.authenticator.words.WordsActivity
 
 class MainActivity : AppCompatActivity() {
     val kEmail = "signature"
 
     var etEmail: EditText? = null
+    var etPass: EditText? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         etEmail = findViewById<EditText>(R.id.et_email)
+        etPass = findViewById<EditText>(R.id.et_password)
 
         loadUserEmail()
 
@@ -32,14 +37,15 @@ class MainActivity : AppCompatActivity() {
 
         btnLogin.setOnClickListener {
             val email = etEmail?.text.toString()
+            val pass = etPass?.text.toString()
 
-//            shared.edit()
-//                .putString(kEmail, email)
-//                .apply()
+            when(checkLogin(email, pass)){
+                0-> Log.d("status","email isn't correct")
+                1-> Log.d("status","password isn't correct")
+                2-> Log.d("status","login is successful")
 
-            updateSignature(email)
+            }
 
-            startWords()
         }
 
         btnSettings.setOnClickListener {
@@ -96,4 +102,17 @@ class MainActivity : AppCompatActivity() {
 
         startActivity(intent)
     }
+
+    private fun checkLogin(mail:String, pass:String):Int {
+        val database = Room.databaseBuilder(this, UsersDatabase::class.java, "users.db")
+            .allowMainThreadQueries()
+            .build()
+
+        var result: Boolean = database.userDao().findUser(mail).isEmpty()
+        if(result){return 0;}
+        result = database.userDao().checkPass(mail, pass).isEmpty()
+        if(result){return 1;}
+        return 2
+    }
+
 }
